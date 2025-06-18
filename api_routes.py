@@ -28,14 +28,31 @@ def initialize_system():
         vector_store = VectorStore()
         openai_client = OpenAIClient()
         
-        # Load and index data
+        # Load data
         logger.info("Loading data...")
         data_processor.load_data()
         
-        logger.info("Indexing documents...")
-        # Start with a smaller dataset to handle AI Pipe token limits
-        documents = data_processor.get_all_documents(limit=100)
-        vector_store.index_documents(documents)
+        # Check if vector store already has documents
+        existing_count = vector_store.collection.count()
+        if existing_count == 0:
+            logger.info("Indexing documents in background...")
+            # Start with a smaller dataset to handle AI Pipe token limits
+            documents = data_processor.get_all_documents(limit=50)
+            
+            # Initialize with basic documents first for immediate functionality
+            import threading
+            def background_indexing():
+                try:
+                    vector_store.index_documents(documents)
+                    logger.info("Background indexing completed!")
+                except Exception as e:
+                    logger.error(f"Background indexing failed: {e}")
+            
+            # Start background indexing
+            thread = threading.Thread(target=background_indexing, daemon=True)
+            thread.start()
+        else:
+            logger.info(f"Found {existing_count} existing documents, skipping indexing")
         
         logger.info("System initialization complete!")
 
