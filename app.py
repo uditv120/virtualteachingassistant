@@ -3,6 +3,20 @@ import logging
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+# Load environment variables from .env file
+def load_env_file():
+    """Load environment variables from .env file"""
+    env_file = '.env'
+    if os.path.exists(env_file):
+        with open(env_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key] = value
+
+load_env_file()
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 

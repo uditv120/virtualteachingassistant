@@ -10,10 +10,23 @@ class OpenAIClient:
     """OpenAI client for embeddings and chat completion"""
     
     def __init__(self):
-        self.api_key = os.environ.get("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
-        self.client = OpenAI(api_key=self.api_key)
+        # Check for AI Pipe configuration first
+        self.aipipe_token = os.environ.get("AIPIPE_TOKEN")
+        
+        if self.aipipe_token:
+            # Use AI Pipe proxy
+            self.client = OpenAI(
+                api_key=self.aipipe_token,
+                base_url="https://aipipe.org/openai/v1"
+            )
+            logger.info("Using AI Pipe proxy for OpenAI services")
+        else:
+            # Fallback to direct OpenAI
+            self.api_key = os.environ.get("OPENAI_API_KEY")
+            if not self.api_key:
+                raise ValueError("Either AIPIPE_TOKEN or OPENAI_API_KEY environment variable is required")
+            self.client = OpenAI(api_key=self.api_key)
+            logger.info("Using direct OpenAI API")
         
     def get_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for a list of texts"""
@@ -101,13 +114,18 @@ class OpenAIClient:
             # Parse the response
             response_text = response.choices[0].message.content
             try:
-                response_json = json.loads(response_text)
-                answer = response_json.get('answer', response_text)
-                confidence = response_json.get('confidence', 0.5)
-                sources_used = response_json.get('sources_used', [])
-            except json.JSONDecodeError:
+                if response_text and isinstance(response_text, str):
+                    response_json = json.loads(response_text)
+                    answer = response_json.get('answer', response_text)
+                    confidence = response_json.get('confidence', 0.5)
+                    sources_used = response_json.get('sources_used', [])
+                else:
+                    answer = "I apologize, but I couldn't generate a response."
+                    confidence = 0.0
+                    sources_used = []
+            except (json.JSONDecodeError, TypeError):
                 # Fallback if JSON parsing fails
-                answer = response_text
+                answer = response_text or "I apologize, but I couldn't generate a response."
                 confidence = 0.5
                 sources_used = []
             
