@@ -1,6 +1,9 @@
 import time
 import logging
+from datetime import datetime
 from flask import Blueprint, request, jsonify
+from database import db
+from models import Question, SystemStats, DocumentIndex, UserFeedback
 from data_processor import DataProcessor
 from vector_store import VectorStore
 from openai_client import OpenAIClient

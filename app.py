@@ -25,6 +25,10 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+# Initialize database
+from database import init_database
+db = init_database(app)
+
 # Import routes after app creation to avoid circular imports
 from api_routes import api_bp
 from flask import render_template
