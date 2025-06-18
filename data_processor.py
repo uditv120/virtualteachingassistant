@@ -95,26 +95,30 @@ class DataProcessor:
         }
         self.discourse_posts.append(discourse_post)
         
-    def get_all_documents(self) -> List[Dict[str, Any]]:
+    def get_all_documents(self, limit: int = None) -> List[Dict[str, Any]]:
         """Get all processed documents for indexing"""
         all_docs = []
         
         # Add course content
         for doc in self.course_content:
             if doc['content'].strip():  # Only add non-empty content
+                # Truncate very long content to avoid token issues
+                content = doc['content'][:3000] if len(doc['content']) > 3000 else doc['content']
                 all_docs.append({
                     'id': doc['id'],
-                    'content': f"{doc['title']}\n\n{doc['content']}",
+                    'content': f"{doc['title']}\n\n{content}",
                     'title': doc['title'],
                     'url': doc['url'],
                     'type': doc['type'],
                     'metadata': doc.get('metadata', {})
                 })
         
-        # Add discourse posts
-        for post in self.discourse_posts:
+        # Add discourse posts (prioritize recent ones)
+        sorted_posts = sorted(self.discourse_posts, key=lambda x: x['created_at'] or '', reverse=True)
+        for post in sorted_posts:
             if post['content'].strip():  # Only add non-empty content
-                content = post['content']
+                # Truncate content to avoid token issues
+                content = post['content'][:2000] if len(post['content']) > 2000 else post['content']
                 if post['title']:
                     content = f"{post['title']}\n\n{content}"
                     
@@ -131,6 +135,11 @@ class DataProcessor:
                         'context': post['context']
                     }
                 })
+        
+        # Apply limit if specified (for testing with smaller datasets)
+        if limit and len(all_docs) > limit:
+            all_docs = all_docs[:limit]
+            logger.info(f"Limited to {limit} documents for testing")
         
         logger.info(f"Processed {len(all_docs)} documents total")
         return all_docs

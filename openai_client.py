@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import time
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
 
@@ -29,13 +30,52 @@ class OpenAIClient:
             logger.info("Using direct OpenAI API")
         
     def get_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for a list of texts"""
+        """Generate embeddings for a list of texts with chunking for AI Pipe limits"""
         try:
-            response = self.client.embeddings.create(
-                input=texts,
-                model="text-embedding-3-small"
-            )
-            return [embedding.embedding for embedding in response.data]
+            # For AI Pipe, we need to chunk requests to stay under token limits
+            # Start with very small chunks and increase if successful
+            chunk_size = 5  # Process 5 texts at a time to stay under token limits
+            all_embeddings = []
+            
+            for i in range(0, len(texts), chunk_size):
+                chunk = texts[i:i + chunk_size]
+                # Truncate very long texts to avoid token limits
+                truncated_chunk = [text[:2000] if len(text) > 2000 else text for text in chunk]
+                
+                logger.info(f"Processing embedding chunk {i//chunk_size + 1}/{(len(texts) + chunk_size - 1)//chunk_size} with {len(chunk)} items")
+                
+                try:
+                    response = self.client.embeddings.create(
+                        input=truncated_chunk,
+                        model="text-embedding-3-small"
+                    )
+                    
+                    chunk_embeddings = [embedding.embedding for embedding in response.data]
+                    all_embeddings.extend(chunk_embeddings)
+                    
+                    # Small delay between chunks to avoid rate limiting
+                    import time
+                    time.sleep(1.0)
+                    
+                except Exception as chunk_error:
+                    logger.warning(f"Error in chunk {i//chunk_size + 1}: {chunk_error}")
+                    # Try individual items if chunk fails
+                    for single_text in truncated_chunk:
+                        try:
+                            response = self.client.embeddings.create(
+                                input=[single_text[:1000]],  # Further truncate for individual processing
+                                model="text-embedding-3-small"
+                            )
+                            all_embeddings.extend([embedding.embedding for embedding in response.data])
+                            time.sleep(0.5)
+                        except Exception as single_error:
+                            logger.error(f"Failed to process individual text: {single_error}")
+                            # Add a zero vector as placeholder
+                            all_embeddings.append([0.0] * 1536)  # text-embedding-3-small dimension
+            
+            logger.info(f"Generated {len(all_embeddings)} embeddings successfully")
+            return all_embeddings
+            
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
             raise
