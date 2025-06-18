@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDS Virtual TA - Test Interface</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <h1 class="h2">
+                        <i class="fas fa-robot text-info me-2"></i>
+                        TDS Virtual TA Test Interface
+                    </h1>
+                    <p class="text-muted">Test the Virtual Teaching Assistant API</p>
+                </div>
+
+                <!-- Question Form -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-question-circle me-2"></i>
+                            Ask a Question
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="question-form">
+                            <div class="mb-3">
+                                <label for="question" class="form-label">Question</label>
+                                <textarea class="form-control" id="question" rows="3" 
+                                          placeholder="Ask any question about the TDS course..."
+                                          required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="image" class="form-label">
+                                    Image (Optional)
+                                    <small class="text-muted">- Upload a screenshot or image related to your question</small>
+                                </label>
+                                <input type="file" class="form-control" id="image" accept="image/*">
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button type="submit" class="btn btn-info" id="submit-btn">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    Ask Question
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                                    <i class="fas fa-eraser me-2"></i>
+                                    Clear
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Example Questions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Example Questions
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-secondary btn-sm mb-2 w-100 text-start" onclick="setQuestion('What is the difference between pandas and numpy?')">
+                                    What is the difference between pandas and numpy?
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm mb-2 w-100 text-start" onclick="setQuestion('How do I use Beautiful Soup for web scraping?')">
+                                    How do I use Beautiful Soup for web scraping?
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm mb-2 w-100 text-start" onclick="setQuestion('What are the grading criteria for TDS projects?')">
+                                    What are the grading criteria for TDS projects?
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-secondary btn-sm mb-2 w-100 text-start" onclick="setQuestion('Should I use gpt-4o-mini or gpt-3.5-turbo?')">
+                                    Should I use gpt-4o-mini or gpt-3.5-turbo?
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm mb-2 w-100 text-start" onclick="setQuestion('What is the submission deadline for GA3?')">
+                                    What is the submission deadline for GA3?
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm mb-2 w-100 text-start" onclick="setQuestion('How can I get help with TDS assignments?')">
+                                    How can I get help with TDS assignments?
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Response Area -->
+                <div id="response-area" style="display: none;">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="card-title mb-0">
+                                <i class="fas fa-comments me-2"></i>
+                                Response
+                            </h3>
+                            <span id="response-time" class="badge bg-info"></span>
+                        </div>
+                        <div class="card-body">
+                            <div id="response-content"></div>
+                            
+                            <div id="links-section" style="display: none;">
+                                <hr>
+                                <h5>
+                                    <i class="fas fa-link me-2"></i>
+                                    Related Sources
+                                </h5>
+                                <div id="links-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-outline-info">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function setQuestion(question) {
+            document.getElementById('question').value = question;
+        }
+
+        function clearForm() {
+            document.getElementById('question-form').reset();
+            document.getElementById('response-area').style.display = 'none';
+        }
+
+        function showLoading() {
+            const responseArea = document.getElementById('response-area');
+            const responseContent = document.getElementById('response-content');
+            
+            responseContent.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-info me-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span>Processing your question...</span>
+                </div>
+            `;
+            
+            responseArea.style.display = 'block';
+            document.getElementById('links-section').style.display = 'none';
+        }
+
+        function showError(error) {
+            const responseContent = document.getElementById('response-content');
+            responseContent.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Error:</strong> ${error}
+                </div>
+            `;
+        }
+
+        function showResponse(data) {
+            const responseContent = document.getElementById('response-content');
+            const linksSection = document.getElementById('links-section');
+            const linksContent = document.getElementById('links-content');
+            const responseTime = document.getElementById('response-time');
+            
+            // Show answer
+            responseContent.innerHTML = `
+                <div class="alert alert-success border-0">
+                    <div style="white-space: pre-wrap;">${data.answer}</div>
+                </div>
+            `;
+            
+            // Show response time
+            if (data.response_time) {
+                responseTime.textContent = `${data.response_time}s`;
+            }
+            
+            // Show links if available
+            if (data.links && data.links.length > 0) {
+                let linksHtml = '';
+                data.links.forEach(link => {
+                    const typeIcon = link.type === 'discourse_post' ? 'fas fa-comments' : 'fas fa-book';
+                    const typeBadge = link.type === 'discourse_post' ? 'bg-secondary' : 'bg-info';
+                    
+                    linksHtml += `
+                        <div class="card border-0 bg-dark mb-2">
+                            <div class="card-body py-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="${typeIcon} me-2 text-muted"></i>
+                                    <a href="${link.url}" target="_blank" class="text-decoration-none flex-grow-1">
+                                        ${link.text}
+                                    </a>
+                                    <span class="badge ${typeBadge} ms-2">${link.type.replace('_', ' ')}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                linksContent.innerHTML = linksHtml;
+                linksSection.style.display = 'block';
+            }
+        }
+
+        document.getElementById('question-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const question = document.getElementById('question').value.trim();
+            const imageFile = document.getElementById('image').files[0];
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (!question) {
+                alert('Please enter a question.');
+                return;
+            }
+            
+            // Disable submit button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            showLoading();
+            
+            try {
+                const requestData = { question };
+                
+                // Handle image upload
+                if (imageFile) {
+                    const base64 = await fileToBase64(imageFile);
+                    requestData.image = base64;
+                }
+                
+                const response = await fetch('/api/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResponse(data);
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Network error occurred. Please try again.');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Ask Question';
+            }
+        });
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    // Remove data:image/type;base64, prefix
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+    </script>
+</body>
+</html>
