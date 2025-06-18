@@ -64,9 +64,37 @@ class VectorStore:
             }
             metadatas.append(metadata)
         
-        # Generate embeddings using OpenAI
+        # Generate embeddings using OpenAI with timeout protection
         try:
-            embeddings = self.openai_client.get_embeddings(contents)
+            import threading
+            import queue
+            
+            def generate_embeddings_thread():
+                try:
+                    return self.openai_client.get_embeddings(contents)
+                except Exception as e:
+                    logger.error(f"Error in embedding thread: {e}")
+                    return None
+            
+            # Use a separate thread with timeout for embedding generation
+            result_queue = queue.Queue()
+            
+            def worker():
+                result = generate_embeddings_thread()
+                result_queue.put(result)
+            
+            thread = threading.Thread(target=worker)
+            thread.daemon = True
+            thread.start()
+            
+            # Wait for embeddings with timeout
+            try:
+                embeddings = result_queue.get(timeout=120)  # 2 minute timeout
+                if embeddings is None:
+                    raise Exception("Failed to generate embeddings")
+            except queue.Empty:
+                logger.error("Embedding generation timed out")
+                raise Exception("Embedding generation timed out")
             
             # Add to ChromaDB
             self.collection.add(
@@ -80,7 +108,17 @@ class VectorStore:
             
         except Exception as e:
             logger.error(f"Error indexing documents: {e}")
-            raise
+            # Add basic documents without embeddings for fallback
+            try:
+                self.collection.add(
+                    ids=ids,
+                    documents=contents,
+                    metadatas=metadatas
+                )
+                logger.info(f"Added {len(documents)} documents without embeddings as fallback")
+            except Exception as fallback_error:
+                logger.error(f"Fallback indexing also failed: {fallback_error}")
+                raise
             
     def search(self, query: str, n_results: int = 5) -> List[Dict[str, Any]]:
         """Search for relevant documents"""

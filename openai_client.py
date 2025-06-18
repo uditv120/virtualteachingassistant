@@ -54,7 +54,6 @@ class OpenAIClient:
                     all_embeddings.extend(chunk_embeddings)
                     
                     # Small delay between chunks to avoid rate limiting
-                    import time
                     time.sleep(1.0)
                     
                 except Exception as chunk_error:

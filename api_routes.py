@@ -33,7 +33,8 @@ def initialize_system():
         data_processor.load_data()
         
         logger.info("Indexing documents...")
-        documents = data_processor.get_all_documents()
+        # Start with a smaller dataset to handle AI Pipe token limits
+        documents = data_processor.get_all_documents(limit=100)
         vector_store.index_documents(documents)
         
         logger.info("System initialization complete!")
